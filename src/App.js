@@ -1,35 +1,53 @@
 import React, { useEffect, useState } from "react";
 
-import { Route, Switch, Redirect } from "react-router-dom";
-import MovieList from './components/MovieList';
-import Movie from './components/Movie';
+import { Route, Switch, Redirect, useHistory } from "react-router-dom";
+import MovieList from "./components/MovieList";
+import Movie from "./components/Movie";
+import EditMovieForm from "./components/EditMovieForm";
+import AddMovieForm from "./components/AddMovieForm";
 
-import MovieHeader from './components/MovieHeader';
+import MovieHeader from "./components/MovieHeader";
 
-import FavoriteMovieList from './components/FavoriteMovieList';
+import FavoriteMovieList from "./components/FavoriteMovieList";
 
-import axios from 'axios';
+import axios from "axios";
 
 const App = (props) => {
   const [movies, setMovies] = useState([]);
   const [favoriteMovies, setFavoriteMovies] = useState([]);
+  const [toggle, setToggle] = useState(false);
+  const { push } = useHistory();
 
   useEffect(() => {
-    axios.get('http://localhost:9000/api/movies')
-      .then(res => {
+    axios
+      .get("http://localhost:9000/api/movies")
+      .then((res) => {
         setMovies(res.data);
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
       });
+
+    window.localStorage.getItem("fav");
   }, []);
 
   const deleteMovie = (id) => {
-  }
+    axios
+      .delete("http://localhost:9000/api/movies/" + id)
+      .then((res) => {
+        console.log(res.data);
+        setMovies(res.data);
+      })
+      .catch((error) => console.log(error));
+  };
 
-  const addToFavorites = (movie) => {
-
-  }
+  const addToFavorites = (id) => {
+    const fav = movies.find((item) => item.id === id);
+    const same = favoriteMovies.find((item) => item.id === id);
+    same
+      ? setFavoriteMovies([...favoriteMovies])
+      : setFavoriteMovies([...favoriteMovies, fav]);
+  };
 
   return (
     <div>
@@ -43,18 +61,26 @@ const App = (props) => {
           <FavoriteMovieList favoriteMovies={favoriteMovies} />
 
           <Switch>
-            <Route path="/movies/edit/:id">
+            <Route exact path="/movies/edit/:id">
+              <EditMovieForm setMovies={setMovies} />
             </Route>
 
-            <Route path="/movies/:id">
-              <Movie />
+            <Route exact path="/movies/:id">
+              <Movie
+                deleteMovie={deleteMovie}
+                addToFavorites={addToFavorites}
+              />
             </Route>
 
-            <Route path="/movies">
+            <Route exact path="/movies">
               <MovieList movies={movies} />
             </Route>
 
-            <Route path="/">
+            <Route exact path="/movies/add/777">
+              <AddMovieForm setMovies={setMovies} />
+            </Route>
+
+            <Route exact path="/">
               <Redirect to="/movies" />
             </Route>
           </Switch>
@@ -63,7 +89,4 @@ const App = (props) => {
     </div>
   );
 };
-
-
 export default App;
-
